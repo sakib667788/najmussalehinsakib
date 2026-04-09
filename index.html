@@ -49,7 +49,7 @@ nav {
 .nav-links a:hover { color: var(--text); }
 
 #hero {
-  min-height: 110vh;
+  min-height: 100vh;
   display: flex; flex-direction: column; justify-content: center;
   padding: 9rem 2.5rem 5rem;
   position: relative; overflow: hidden;
@@ -297,17 +297,20 @@ footer {
 </nav>
 
 <section id="hero">
-  <canvas id="hero3d" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;"></canvas>
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.7) 60%, #0a0a0a 100%);pointer-events:none;z-index:2;"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-vline"></div>
 
-  <div class="hero-tag" style="position:relative;z-index:3;">najmussalehin sakib</div>
-  <h1 class="hero-name" style="position:relative;z-index:3;">Najmussalehin<br><em>Sakib</em></h1>
-  <p class="hero-desc" style="position:relative;z-index:3;">Student. Creator. The guy who always has the right reel for the right moment — and somehow makes everything more fun.</p>
-  <div class="hero-cta" style="position:relative;z-index:3;">
+  <!-- Tile Loop Animation -->
+  <div class="tile-scene" id="tileScene"></div>
+
+  <div class="hero-tag">najmussalehin sakib</div>
+  <h1 class="hero-name">Najmussalehin<br><em>Sakib</em></h1>
+  <p class="hero-desc">Student. Creator. The guy who always has the right reel for the right moment — and somehow makes everything more fun.</p>
+  <div class="hero-cta">
     <a href="#contact" class="btn-primary">Get in touch</a>
     <a href="#about" class="btn-ghost">Learn more</a>
   </div>
-  <div class="hero-foot" style="position:relative;z-index:3;">
+  <div class="hero-foot">
     <span class="hero-domain">najmussalehinsakib.ninja</span>
     <span class="scroll-hint">scroll</span>
   </div>
@@ -476,215 +479,100 @@ footer {
 
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <script>
 (function() {
-  var canvas = document.getElementById('hero3d');
-  if (!canvas || typeof THREE === 'undefined') return;
-  var hero = document.getElementById('hero');
+  var scene = document.getElementById('tileScene');
+  if (!scene) return;
 
-  function getSize() { return { w: hero.offsetWidth, h: hero.offsetHeight }; }
-  var sz = getSize();
+  // Add center glow
+  var glow = document.createElement('div');
+  glow.className = 'tile-scene-glow';
+  scene.appendChild(glow);
 
-  var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(sz.w, sz.h);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.4;
+  var TILE_COUNT = 8;
+  var tiles = [];
+  var RADIUS = 130; // orbit radius
 
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(42, sz.w / sz.h, 0.1, 100);
-  camera.position.set(0, 0, 6.5);
+  // Colors for variety
+  var colors = [
+    'rgba(200,169,110,0.15)',
+    'rgba(120,60,200,0.15)',
+    'rgba(100,140,255,0.12)',
+    'rgba(200,169,110,0.10)',
+    'rgba(160,80,220,0.14)',
+    'rgba(80,120,255,0.12)',
+    'rgba(200,169,110,0.18)',
+    'rgba(140,60,180,0.13)',
+  ];
 
-  // Lights
-  var ambient = new THREE.AmbientLight(0x080808, 1);
-  scene.add(ambient);
-
-  // Main gold key light
-  var goldLight = new THREE.PointLight(0xc8a96e, 20, 15);
-  goldLight.position.set(3, 2, 4);
-  goldLight.castShadow = true;
-  scene.add(goldLight);
-
-  // Purple fill
-  var purpleLight = new THREE.PointLight(0x6633cc, 15, 12);
-  purpleLight.position.set(-3, -1, 2);
-  scene.add(purpleLight);
-
-  // Rim light
-  var rimLight = new THREE.PointLight(0xffffff, 5, 10);
-  rimLight.position.set(0, 4, -3);
-  scene.add(rimLight);
-
-  // Blue accent
-  var blueLight = new THREE.PointLight(0x3366ff, 8, 10);
-  blueLight.position.set(2, -3, 1);
-  scene.add(blueLight);
-
-  // ── MAIN LARGE TORUS (ribbon/loop shape) ──
-  var mainTorus = new THREE.TorusGeometry(2.0, 0.28, 128, 300);
-  var glassMat = new THREE.MeshPhysicalMaterial({
-    color: 0x111111,
-    metalness: 0.0,
-    roughness: 0.0,
-    transmission: 0.85,
-    thickness: 0.5,
-    reflectivity: 1.0,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.0,
-    ior: 1.8,
-    transparent: true,
-    opacity: 0.92
-  });
-  var ring1 = new THREE.Mesh(mainTorus, glassMat);
-  ring1.position.set(1.8, 0.2, 0);
-  ring1.castShadow = true;
-  scene.add(ring1);
-
-  // ── SECOND TORUS - inner ring ──
-  var innerTorus = new THREE.TorusGeometry(1.2, 0.14, 64, 200);
-  var innerMat = new THREE.MeshPhysicalMaterial({
-    color: 0x0a0a0a,
-    metalness: 0.9,
-    roughness: 0.05,
-    reflectivity: 1.0,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.0,
-    transparent: true,
-    opacity: 0.95
-  });
-  var ring2 = new THREE.Mesh(innerTorus, innerMat);
-  ring2.position.set(1.8, 0.2, 0);
-  ring2.castShadow = true;
-  scene.add(ring2);
-
-  // ── THIRD TORUS - wide flat ring ──
-  var wideRing = new THREE.TorusGeometry(2.6, 0.06, 32, 200);
-  var wideMat = new THREE.MeshPhysicalMaterial({
-    color: 0x050505,
-    metalness: 1.0,
-    roughness: 0.02,
-    reflectivity: 1.0,
-    transparent: true,
-    opacity: 0.6
-  });
-  var ring3 = new THREE.Mesh(wideRing, wideMat);
-  ring3.position.set(1.8, 0.2, 0);
-  scene.add(ring3);
-
-  // ── GOLD ORB (traveling ball) ──
-  var orbGeo = new THREE.SphereGeometry(0.16, 64, 64);
-  var orbMat = new THREE.MeshPhysicalMaterial({
-    color: 0xc8a96e,
-    metalness: 1.0,
-    roughness: 0.0,
-    reflectivity: 1.0,
-    clearcoat: 1.0,
-    clearcoatRoughness: 0.0,
-    emissive: 0xc8a96e,
-    emissiveIntensity: 0.5
-  });
-  var orb = new THREE.Mesh(orbGeo, orbMat);
-  orb.castShadow = true;
-  scene.add(orb);
-
-  // Orb glow halo
-  var haloGeo = new THREE.SphereGeometry(0.32, 32, 32);
-  var haloMat = new THREE.MeshBasicMaterial({ color: 0xc8a96e, transparent: true, opacity: 0.08, side: THREE.BackSide });
-  var halo = new THREE.Mesh(haloGeo, haloMat);
-  scene.add(halo);
-
-  // ── FLOOR for shadow ──
-  var floorGeo = new THREE.PlaneGeometry(20, 20);
-  var floorMat = new THREE.ShadowMaterial({ opacity: 0.35 });
-  var floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -3.5;
-  floor.receiveShadow = true;
-  scene.add(floor);
-
-  // ── PARTICLES ──
-  var pCount = 80;
-  var pGeo = new THREE.BufferGeometry();
-  var pPos = new Float32Array(pCount * 3);
-  for (var i = 0; i < pCount; i++) {
-    pPos[i*3]   = (Math.random()-0.5)*12;
-    pPos[i*3+1] = (Math.random()-0.5)*8;
-    pPos[i*3+2] = (Math.random()-0.5)*6 - 2;
+  for (var i = 0; i < TILE_COUNT; i++) {
+    var tile = document.createElement('div');
+    tile.className = 'tile';
+    var inner = document.createElement('div');
+    inner.className = 'tile-inner';
+    inner.style.background = 'linear-gradient(135deg, ' + colors[i] + ' 0%, rgba(10,10,10,0.8) 100%)';
+    var dot = document.createElement('div');
+    dot.className = 'tile-dot';
+    inner.appendChild(dot);
+    tile.appendChild(inner);
+    scene.appendChild(tile);
+    tiles.push(tile);
   }
-  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-  var pMat = new THREE.PointsMaterial({ color: 0xc8a96e, size: 0.03, transparent: true, opacity: 0.35 });
-  scene.add(new THREE.Points(pGeo, pMat));
 
-  var clock = new THREE.Clock();
+  var startTime = null;
+  var LOOP_DURATION = 12000; // 12 seconds per full loop
 
-  function animate() {
+  function easeInOut(t) {
+    return t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+  }
+
+  function animate(ts) {
+    if (!startTime) startTime = ts;
+    var elapsed = (ts - startTime) % LOOP_DURATION;
+    var progress = elapsed / LOOP_DURATION; // 0 to 1
+
+    for (var i = 0; i < TILE_COUNT; i++) {
+      // Each tile offset in the loop
+      var offset = i / TILE_COUNT;
+      var t = (progress + offset) % 1;
+
+      // Angle around the loop (XZ plane = horizontal circle)
+      var angle = t * Math.PI * 2;
+
+      // Position on orbit
+      var x = Math.sin(angle) * RADIUS;
+      var z = Math.cos(angle) * RADIUS - RADIUS; // shift so front = z=0
+
+      // Y: tiles rise up as they come to front, dip down at back
+      var y = -Math.sin(angle) * 40;
+
+      // Scale: bigger when in front, smaller at back
+      var scale = 0.55 + 0.55 * ((Math.cos(angle) + 1) / 2);
+
+      // Opacity: fade out at sides/back
+      var opacity = 0.25 + 0.75 * ((Math.cos(angle) + 1) / 2);
+
+      // Self rotation: tile rotates as it travels
+      var rotY = -angle * (180 / Math.PI);
+      var rotX = Math.sin(angle * 2) * 8;
+
+      // z-index based on z position
+      var zIndex = Math.round(z + RADIUS + 1);
+
+      tiles[i].style.transform =
+        'translate3d(' + x + 'px, ' + y + 'px, ' + z + 'px)' +
+        ' rotateY(' + rotY + 'deg)' +
+        ' rotateX(' + rotX + 'deg)' +
+        ' scale(' + scale + ')';
+      tiles[i].style.opacity = opacity;
+      tiles[i].style.zIndex = zIndex;
+    }
+
     requestAnimationFrame(animate);
-    var t = clock.getElapsedTime();
-
-    // Slow dramatic rotation
-    ring1.rotation.x = t * 0.15 + Math.sin(t * 0.1) * 0.3;
-    ring1.rotation.y = t * 0.10;
-    ring1.rotation.z = Math.sin(t * 0.13) * 0.5;
-
-    ring2.rotation.x = t * 0.20 + 1.2;
-    ring2.rotation.y = t * 0.14;
-    ring2.rotation.z = Math.cos(t * 0.11) * 0.4;
-
-    ring3.rotation.x = Math.PI/2 + Math.sin(t * 0.08) * 0.2;
-    ring3.rotation.y = t * 0.06;
-
-    // Gentle float
-    ring1.position.y = 0.2 + Math.sin(t * 0.4) * 0.15;
-    ring2.position.y = 0.2 + Math.sin(t * 0.4 + 1) * 0.1;
-    ring3.position.y = 0.2 + Math.sin(t * 0.4 + 2) * 0.08;
-
-    // Gold orb travels along main ring path
-    var angle = t * 0.85;
-    var R = 2.0, r = 0.28;
-    var ox = (R + r * Math.cos(angle * 2.5)) * Math.cos(angle);
-    var oy = (R + r * Math.cos(angle * 2.5)) * Math.sin(angle);
-    var oz = r * Math.sin(angle * 2.5);
-
-    // Transform by ring1 rotation
-    var cx = Math.cos(ring1.rotation.x), sx = Math.sin(ring1.rotation.x);
-    var cy = Math.cos(ring1.rotation.y), sy = Math.sin(ring1.rotation.y);
-    var cz = Math.cos(ring1.rotation.z), sz2 = Math.sin(ring1.rotation.z);
-
-    var x1 = ox*cy + oz*sy;
-    var z1 = -ox*sy + oz*cy;
-    var y1 = oy*cx - z1*sx;
-    var z2 = oy*sx + z1*cx;
-    var x2 = x1*cz - y1*sz2;
-    var y2 = x1*sz2 + y1*cz;
-
-    orb.position.set(x2 + 1.8, y2 + ring1.position.y, z2);
-    halo.position.copy(orb.position);
-
-    // Gold light follows orb
-    goldLight.position.set(orb.position.x + 0.8, orb.position.y + 0.8, orb.position.z + 3);
-    goldLight.intensity = 18 + Math.sin(t * 1.2) * 4;
-
-    // Purple breathe
-    purpleLight.intensity = 12 + Math.sin(t * 0.6) * 6;
-    purpleLight.position.x = -3 + Math.sin(t * 0.25) * 1.5;
-    purpleLight.position.y = -1 + Math.cos(t * 0.35) * 1;
-
-    // Blue pulse
-    blueLight.intensity = 6 + Math.sin(t * 0.9 + 2) * 3;
-
-    renderer.render(scene, camera);
   }
-  animate();
 
-  window.addEventListener('resize', function() {
-    var s = getSize();
-    camera.aspect = s.w / s.h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(s.w, s.h);
-  });
+  requestAnimationFrame(animate);
 })();
 </script>
 </body>
